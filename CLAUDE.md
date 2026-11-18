@@ -12,6 +12,15 @@ Heido is a support-email automation pipeline that connects three services:
 
 Data flow: Gmail → Gemini classification → monday.com task.
 
+## Relationship to the no-code version
+
+This repository is the code-based version of Heido. The original no-code version, built on Make.com, lives in the public repo `heido-ai-triage`. Both versions automate the same business process, so the no-code version is the reference for intended behavior.
+
+## Communication
+
+- The user may write in Hebrew. Always reply in English.
+- Always write code, comments, commit messages and documentation in English.
+
 ## Status
 
 The repository has no code yet. No language, framework, build, lint or test commands have been chosen. Update this file once they exist, covering:
