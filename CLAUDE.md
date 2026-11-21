@@ -21,6 +21,34 @@ This repository is the code-based version of Heido. The original no-code version
 - The user may write in Hebrew. Always reply in English.
 - Always write code, comments, commit messages and documentation in English.
 
+## Working rules
+
+### Code style
+- Write simple, clear, readable code. Prefer the shortest solution that fully works.
+- No over-engineering: no extra classes, layers or features I didn't ask for.
+- Use clear names for variables and functions.
+- Every function gets a short English docstring (what it does, inputs, outputs).
+- Add comments only where the code isn't obvious, explaining why.
+
+### Changes
+- Before writing code, explain the plan in simple words and wait for my approval.
+- Never change, delete or refactor existing code without asking first and explaining why.
+- Change only what the task needs. Keep changes small.
+- Don't add new packages without asking and explaining why they're needed.
+
+### Security
+- Never read, print or log secrets (.env, credentials.json, token.json).
+- Never hardcode API keys, passwords or tokens. Load them from .env.
+
+### Testing and Git
+- After a change, tell me how to run and check that it works.
+- Don't commit or push without my approval. Use short, clear commit messages.
+
+### Learning
+- Explain what you're doing in simple words.
+- After each feature, update docs/learning-notes.md with a simple explanation in English of what each part does and why, for a beginner.
+- If something is unclear, ask me instead of guessing.
+
 ## Status
 
 The repository has no code yet. No language, framework, build, lint or test commands have been chosen. Update this file once they exist, covering:
