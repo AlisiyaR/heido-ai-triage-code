@@ -1,0 +1,12 @@
+# Gemini SDK (classification)
+google-genai
+# Data validation; defines the AI response schema
+pydantic
+# HTTP client for the monday.com GraphQL API
+requests
+# Loads secrets from .env into environment variables
+python-dotenv
+# Gmail API client (read, mark as read, send)
+google-api-python-client
+# Browser sign-in (OAuth) that creates token.json
+google-auth-oauthlib
