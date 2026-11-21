@@ -51,9 +51,27 @@ This repository is the code-based version of Heido. The original no-code version
 
 ## Status
 
-The repository has no code yet. No language, framework, build, lint or test commands have been chosen. Update this file once they exist, covering:
+Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Build, run, lint and test commands, including how to run a single test
-- Where credentials and config for Gmail, Gemini and monday.com are loaded from
-- The classification categories and how each one maps to a monday.com board, group or column
-- How emails are fetched (polling or push) and how already-processed emails are tracked to avoid duplicate tasks
+- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`
+- Not built yet: `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
+
+### Setup and run
+    py -3.13 -m venv .venv
+    .venv\Scripts\Activate.ps1
+    pip install -r requirements.txt
+    python gmail_client.py   # first run opens a browser sign-in and creates token.json
+    python classifier.py     # classifies one sample email
+
+### Credentials and config
+- `.env` (copied from `.env.example`): `GEMINI_API_KEY`, `MONDAY_API_TOKEN`, `MONDAY_BOARD_ID`, `MONDAY_GROUP_ID`. Loaded by `config.py`.
+- Gmail uses OAuth (Desktop app, scope `gmail.modify`): `credentials.json` identifies the app, `token.json` is created on first sign-in.
+- All secret files are git-ignored.
+
+### Classification and routing
+- The 9 categories are in `config.CATEGORIES` and must match `prompt.txt`. An unknown category becomes `Other / Unclassified`, and an unknown priority becomes `Medium`.
+- The assignee comes from a fixed rule, `config.ROUTING`, not from the AI. The default is Emily Carter.
+- monday.com column IDs are in `config.COLUMNS`.
+
+### Email fetching (planned)
+Polling: `main.py` runs every few minutes and reads up to 20 unread INBOX emails through the Gmail API. An email is marked as read once its monday item exists, so it is never processed twice.
