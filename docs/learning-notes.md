@@ -112,3 +112,24 @@ This is more reliable than asking for text and trying to cut it into pieces ours
 - **`logging`**: like `print`, but every line has a level (INFO, WARNING, ERROR) and can go to the console and a file. `logger = logging.getLogger(__name__)` creates a logger named after the file.
 - **`%r` / `%s` / `%d` in log messages**: placeholders. `%r` shows the value with quotes, so empty or odd values are easy to spot.
 - **`os.path.dirname(__file__)`**: the folder of the current file, so `prompt.txt` is found no matter where you run the program from.
+
+
+###### Picking the employee (`router.py`) ######
+
+### What is it for?
+It decides which employee gets the ticket, based on the category.
+This is a **fixed rule, not the AI**, like the Switch module in Make.
+The AI only picks the category; our code picks the person. That way the assignment is always predictable and easy to check.
+
+### How it works
+`assign(category)` looks the category up in `config.ROUTING`:
+- Daniel Anderson: Login & Access, Software & System, Performance
+- Ryan Mitchell: Network & Connectivity, Hardware, Installation & Configuration
+- Anything else (including an unexpected value): Emily Carter, the default
+
+The table lives in `config.py`. `router.py` only uses it, so the rule is written in one place.
+
+### Python concepts in this file
+- **`dict.get(key, default)`**: returns the value for `key`, or `default` if the key is not in the dictionary. Like `getOrDefault()` on a Java `HashMap`. No error is raised for a missing key.
+- **`list + list`**: joins two lists into a new one. The self-test uses it to add one made-up category to the real ones.
+- **`f"{name:<38}"`**: pads the text to 38 characters, aligned left, so the output lines up in columns.

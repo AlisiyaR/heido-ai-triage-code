@@ -53,8 +53,8 @@ This repository is the code-based version of Heido. The original no-code version
 
 Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`
-- Not built yet: `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
+- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`
+- Not built yet: `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
 
 ### Setup and run
     py -3.13 -m venv .venv
