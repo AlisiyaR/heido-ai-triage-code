@@ -70,6 +70,8 @@ logs/
 *.sqlite3
 *.db
 .cache/
+# evaluate.py output
+results*.csv
 
 # ── Editors & OS ──────────────────────────────────────────────
 .vscode/*
