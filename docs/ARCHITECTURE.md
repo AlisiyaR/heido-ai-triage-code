@@ -55,7 +55,7 @@ flowchart TD
 | `evaluate.py` | Measures accuracy on the 30 test emails, without Gmail or monday | Built |
 | `email_reader.py` | Reads up to 20 unread INBOX emails (subject, body, sender, date, attachments) and marks them as read | Built |
 | `monday_client.py` | Creates the monday item with all 10 columns and uploads attachments | Built |
-| `mailer.py` | Sends the confirmation email through the Gmail API | Planned |
+| `mailer.py` | Sends the confirmation email through the Gmail API | Built |
 | `main.py` | Runs the full pipeline, with logging, `--dry-run`, `--once` and a repeat interval | Planned |
 
 ## 4. Component details
@@ -144,6 +144,15 @@ flowchart TD
 - `check_response()` turns any monday error (HTTP error, `errors` list or `error_message`) into a `RuntimeError` with monday's own message. There are no retries for monday calls.
 - Status and dropdown values are set by **label text**, not by Make's label numbers. See [ADR 0012](adr/0012-monday-labels-by-text.md).
 
+### 4.8 Sending the confirmation: `mailer.py`
+- `send_confirmation(service, to_address, item_id, title)` sends the confirmation from the brief through the Gmail API, using the same connection as `email_reader.py`. It returns the sent Gmail message ID.
+- **Subject:** "We received your request – Ticket {item_id}". **Body:** the HTML from the brief, with the ticket number and topic filled in (templates in `config.py`).
+- **The title is HTML-escaped.** It is AI text based on the customer's email, so something like `<script>` must show as text, not run.
+- A **plain-text version** is included for email apps that do not show HTML. It is made from the HTML with `email_reader.strip_html()`, so the template exists only once.
+- Sent as a **new email** (not a reply), like Make. Gmail fills in the "From" address (the support inbox).
+- Errors are passed up to `main.py`, which logs them without retrying (the monday item already exists, [ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
+- **Email-loop guard:** a confirmation sent to the support inbox itself would come back as a new unread email and become a ticket. The self-test refuses that address, and `main.py` will skip emails sent by the inbox itself. See [ADR 0013](adr/0013-confirmation-email-format.md).
+
 ## 5. External services
 
 | Service | Used for | Access | Credentials |
@@ -195,6 +204,7 @@ heido-ai-triage-code/
 ├── evaluate.py          # accuracy test
 ├── email_reader.py      # read unread emails and attachments
 ├── monday_client.py     # create the monday item, upload files
+├── mailer.py            # send the confirmation email
 ├── test-data/           # 30 test emails (from the Make version)
 ├── docs/
 │   ├── ARCHITECTURE.md  # this file

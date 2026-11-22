@@ -1,6 +1,6 @@
 # Heido AI Inquiry Triage – Python version
 
-> **🚧 Work in progress.** Reading emails, classification, monday.com task creation and evaluation are working; the confirmation email and full pipeline are still being built.
+> **🚧 Work in progress.** All building blocks work: reading emails, classification, monday.com task creation, the confirmation email and evaluation. The full pipeline (`main.py`) is still being built.
 
 An automation pipeline that turns customer support emails into tasks for **Heido**, a fictional IT services company:
 
@@ -20,7 +20,7 @@ Both versions automate the same business process. The Python version adds retrie
 | `evaluate.py` | Accuracy test on 30 test emails | ✅ Done |
 | `email_reader.py` | Read unread emails and attachments | ✅ Done |
 | `monday_client.py` | Create the monday.com task and upload files | ✅ Done |
-| `mailer.py` | Send the confirmation email | ⏳ Planned |
+| `mailer.py` | Send the confirmation email | ✅ Done |
 | `main.py` | Run the full pipeline (with dry-run mode) | ⏳ Planned |
 
 ## Evaluation results so far

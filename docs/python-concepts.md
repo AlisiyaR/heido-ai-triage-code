@@ -96,3 +96,16 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **`a or b` as a fallback**: returns `a` if it is not empty, otherwise `b`. Used for `email.from_name or email.from_email`.
 - **`int("123")`**: turns text into a whole number; it raises `ValueError` for text like `"12; drop"`. Used as a safety check before putting the item ID into a query.
 - **Duck typing**: `build_column_values` does not import the `Email` or `Classification` classes; it only uses their attributes (`email.body`, `classification.title`). Any object with those attributes works, which also makes testing easy.
+
+
+## `mailer.py`
+
+- **`EmailMessage`** (from `email.message`): Python's built-in way to build an email. You set headers like a dict (`message["To"] = ...`), then the content.
+- **`set_content(text)` + `add_alternative(html, subtype="html")`**: creates one email with two versions of the same text, plain and HTML ("multipart/alternative"). The email app shows the best one it supports.
+- **`message.as_bytes()`**: turns the finished email into the raw bytes that mail servers send. Non-English characters (like the "–" in the subject) are encoded automatically.
+- **`base64.urlsafe_b64encode(bytes)`**: the reverse of what `email_reader.py` does: turns bytes into base64url text, because the Gmail API wants the raw email in that form. `.decode("ascii")` turns the result into a normal string.
+- **`html.escape(text)`**: replaces `<`, `>`, `&` and quotes with safe codes (`&lt;`, `&gt;` ...), so text is shown as text and never treated as HTML.
+- **`str.format(name=value)`**: fills named placeholders like `{item_id}` in a template string. Extra placeholders that are not in the template are an error, so the template and the code must match.
+- **`input("question ")`**: shows a question in the terminal and waits for the user to type an answer. Used only in the self-test.
+- **`.strip()` and `.lower()`**: remove spaces at both ends, and make text lower case. Used to compare two email addresses safely ("Heido.Support@Gmail.com" and "heido.support@gmail.com" are the same address).
+- **Importing a function from another module** (`from email_reader import strip_html`): reuses code instead of writing it twice.
