@@ -53,8 +53,8 @@ This repository is the code-based version of Heido. The original no-code version
 
 Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`
-- Not built yet: `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
+- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`
+- Not built yet: `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
 
 ### Setup and run
     py -3.13 -m venv .venv
@@ -62,6 +62,7 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
     pip install -r requirements.txt
     python gmail_client.py   # first run opens a browser sign-in and creates token.json
     python classifier.py     # classifies one sample email
+    python evaluate.py       # accuracy on both test CSVs in test-data/ (add --out results.csv to save)
 
 ### Credentials and config
 - `.env` (copied from `.env.example`): `GEMINI_API_KEY`, `MONDAY_API_TOKEN`, `MONDAY_BOARD_ID`, `MONDAY_GROUP_ID`. Loaded by `config.py`.
@@ -71,6 +72,7 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
 ### Classification and routing
 - The 9 categories are in `config.CATEGORIES` and must match `prompt.txt`. An unknown category becomes `Other / Unclassified`, and an unknown priority becomes `Medium`.
 - The assignee comes from a fixed rule, `config.ROUTING`, not from the AI. The default is Emily Carter.
+- Gemini calls are limited to `config.GEMINI_REQUESTS_PER_MINUTE` (15, free tier): `classifier.py` spaces calls 4s apart and, on 429/503, waits Google's `retryDelay` (max 60s).
 - monday.com column IDs are in `config.COLUMNS`.
 
 ### Email fetching (planned)

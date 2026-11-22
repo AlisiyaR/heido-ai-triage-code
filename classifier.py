@@ -21,6 +21,11 @@ client = genai.Client(api_key=config.GEMINI_API_KEY)
 
 MAX_ATTEMPTS = 3
 RETRY_CODES = (429, 503)  # rate limit, overloaded: temporary, worth retrying
+MAX_RETRY_WAIT = 60  # seconds; a longer retryDelay usually means the daily quota is used up
+
+# Minimum seconds between two Gemini calls: 60 / 15 = 4.
+MIN_SECONDS_BETWEEN_CALLS = 60 / config.GEMINI_REQUESTS_PER_MINUTE
+last_call_time = None  # time.monotonic() of the previous call
 
 
 class Classification(BaseModel):
@@ -57,7 +62,8 @@ def call_gemini(prompt):
         A Classification parsed from Gemini's JSON answer.
 
     Raises:
-        errors.APIError: on a non-temporary error, or after the last attempt.
+        errors.APIError: on a non-temporary error, after the last attempt, or
+        when Google asks to wait longer than MAX_RETRY_WAIT seconds.
     """
     gemini_config = types.GenerateContentConfig(
         response_mime_type="application/json",
@@ -65,6 +71,7 @@ def call_gemini(prompt):
         thinking_config=types.ThinkingConfig(thinking_level="LOW"),
     )
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        wait_for_rate_limit()  # also before retries: every attempt counts toward the limit
         try:
             response = client.models.generate_content(
                 model=config.GEMINI_MODEL, contents=prompt, config=gemini_config
@@ -75,12 +82,49 @@ def call_gemini(prompt):
         except errors.APIError as error:
             if error.code not in RETRY_CODES or attempt == MAX_ATTEMPTS:
                 raise
-            wait_seconds = 2**attempt  # 2s, then 4s
+            retry_delay = get_retry_delay(error)
+            if retry_delay is None:
+                wait_seconds, source = 2**attempt, "backoff"  # 2s, then 4s
+            else:
+                wait_seconds, source = retry_delay + 1, "Google retryDelay"
+            if wait_seconds > MAX_RETRY_WAIT:
+                raise
             logger.warning(
-                "Gemini error %s (attempt %d/%d), retrying in %ds",
-                error.code, attempt, MAX_ATTEMPTS, wait_seconds,
+                "Gemini error %s (attempt %d/%d), waiting %.0fs (%s)",
+                error.code, attempt, MAX_ATTEMPTS, wait_seconds, source,
             )
             time.sleep(wait_seconds)
+
+
+def wait_for_rate_limit():
+    """Sleep if needed, so Gemini calls are at least MIN_SECONDS_BETWEEN_CALLS apart.
+
+    This keeps us at or under config.GEMINI_REQUESTS_PER_MINUTE.
+    """
+    global last_call_time  # we change the module-level variable, not a local copy
+    if last_call_time is not None:
+        seconds_since_last = time.monotonic() - last_call_time
+        if seconds_since_last < MIN_SECONDS_BETWEEN_CALLS:
+            time.sleep(MIN_SECONDS_BETWEEN_CALLS - seconds_since_last)
+    last_call_time = time.monotonic()
+
+
+def get_retry_delay(error):
+    """Read how long Google asks us to wait from a 429/503 error.
+
+    Args:
+        error: an errors.APIError from the Gemini SDK.
+
+    Returns:
+        The wait in seconds (e.g. "37s" -> 37.0), or None if Google gave none.
+    """
+    try:
+        for detail in error.details["error"]["details"]:
+            if "retryDelay" in detail:
+                return float(detail["retryDelay"].rstrip("s"))
+    except (KeyError, TypeError, ValueError):
+        pass  # unexpected error format: fall back to our own backoff
+    return None
 
 
 def validate(result):

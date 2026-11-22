@@ -113,6 +113,27 @@ This is more reliable than asking for text and trying to cut it into pieces ours
 - **`%r` / `%s` / `%d` in log messages**: placeholders. `%r` shows the value with quotes, so empty or odd values are easy to spot.
 - **`os.path.dirname(__file__)`**: the folder of the current file, so `prompt.txt` is found no matter where you run the program from.
 
+### Rate limits (staying under 15 requests per minute)
+The Gemini free tier allows **15 requests per minute**. Above that, Google answers with error **429** ("too many requests").
+We handle this in two ways:
+
+1. **Prevent it: space out the calls.** `wait_for_rate_limit()` runs before every Gemini call, retries included.
+   It remembers when the last call happened and, if needed, sleeps until **4 seconds** have passed (60 seconds / 15 = 4).
+   So we can never send more than 15 calls in a minute. Both `evaluate.py` and the real pipeline go through `classify()`, so both are protected.
+   The price: 20 emails take at least about 80 seconds.
+2. **If it still happens: wait as long as Google asks.** A 429 error includes `retryDelay`, e.g. `"37s"`.
+   `get_retry_delay(error)` reads it, and we wait that long plus 1 second. If Google gives no time, we use our own backoff (2s, then 4s).
+   If Google asks for more than 60 seconds, the **daily** quota is probably used up. Waiting would not help, so we stop with an error.
+
+Limitation: the spacing works inside one running program. Two programs using the same key at the same time could still go over the limit together.
+
+More Python concepts used here:
+- **`time.monotonic()`**: a clock that only moves forward, good for measuring how much time passed. (The normal clock can jump, e.g. when the computer syncs its time.)
+- **`global last_call_time`**: inside a function, this says "change the variable defined at the top of the file", not a new local one.
+- **`"37s".rstrip("s")`**: removes the `s` from the end, giving `"37"`. `float(...)` turns it into the number 37.0.
+- **`except (KeyError, TypeError, ValueError):`**: catches several error types in one line. Here: the error has an unexpected format, so we fall back to our own backoff.
+- **`pass`**: "do nothing". Python needs at least one line inside a block.
+
 
 ###### Picking the employee (`router.py`) ######
 
@@ -133,3 +154,52 @@ The table lives in `config.py`. `router.py` only uses it, so the rule is written
 - **`dict.get(key, default)`**: returns the value for `key`, or `default` if the key is not in the dictionary. Like `getOrDefault()` on a Java `HashMap`. No error is raised for a missing key.
 - **`list + list`**: joins two lists into a new one. The self-test uses it to add one made-up category to the real ones.
 - **`f"{name:<38}"`**: pads the text to 38 characters, aligned left, so the output lines up in columns.
+
+
+###### Measuring accuracy (`evaluate.py`) ######
+
+### What is it for?
+It tests how accurate the AI is, without Gmail or monday.
+It runs our classifier and router on the 30 test emails from the Make version (`test-data/`), compares each answer to the expected one, and prints the accuracy.
+This proves, with numbers, that the Python version works as well as the Make version.
+
+### How to run it
+- `python evaluate.py`: runs both test files.
+- `python evaluate.py test-data/heido_test_cases.csv`: runs one file.
+- `python evaluate.py --out results.csv`: also saves all results to a CSV you can open in Excel.
+
+### What it prints
+1. One progress line per email, e.g. `T01  category OK  priority OK  assignee OK`.
+2. A report for each file: the accuracy for category, priority and assignee, the errors, and a list of mismatches.
+3. A **Combined** report for all emails together.
+
+### Errors vs. wrong answers
+These are two different things, so they are reported separately:
+- **Wrong answer (mismatch)**: the AI answered, but not what we expected. This tells us about the AI's quality.
+- **Error**: there was no answer at all, e.g. a 429 rate-limit error. This tells us nothing about the AI.
+
+So the accuracy is calculated **only on emails that got an answer**. For example, `Category 13/13 100%` with `Errors: 2` means 13 emails were answered and all 13 were correct; 2 emails failed and are listed under "Error details".
+
+### The functions
+- **`evaluate_row(row, file_name)`**: classifies one test email with the existing `classify()` and `assign()`, and stores expected vs. actual values. If the API fails, it saves the error so the run continues.
+- **`evaluate_file(path)`**: reads one CSV and calls `evaluate_row` for each row.
+- **`is_match(result, field)`**: True if actual equals expected.
+- **`print_report(title, results)`**: prints the accuracy (answered emails only), the errors and the mismatches. Called once per file and once for the combined list, so the printing code is written only once.
+- **`save_results(results, path)`**: writes all results to a CSV.
+- **`main()`**: reads the command-line options and runs everything.
+
+### How accuracy is calculated
+accuracy = correct answers / number of answered emails (errors left out). For example, 14 correct out of 15 = 93%.
+One email is about 7% of a 15-email file, so a single difference changes the number a lot.
+The AI is not 100% repeatable, so a run can differ from the Make results by one email.
+
+### Python concepts in this file
+- **`argparse`**: reads options from the command line (`--out results.csv`). `nargs="*"` means "zero or more file names". If none are given, `default` is used.
+- **`csv.DictReader`**: reads a CSV where each row becomes a dict, e.g. `row["subject"]`.
+- **`csv.DictWriter`**: the opposite: writes a list of dicts to a CSV.
+- **`encoding="utf-8-sig"`**: the test files start with a hidden BOM character. This encoding skips it; without it, the first column name would be wrong.
+- **List comprehension** `[x for x in items if ...]`: builds a new list in one line. Like a short `for` loop that collects values.
+- **Dict comprehension** `{path: evaluate_file(path) for path in files}`: the same, but builds a dict.
+- **`sum(1 for ... if ...)`**: counts how many items match a condition.
+- **`except Exception as error`**: catches any error, so one bad row does not stop the whole run.
+- **`f"{value:.0%}"`**: formats a number like 0.933 as `93%`.

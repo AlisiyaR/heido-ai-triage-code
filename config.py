@@ -34,6 +34,7 @@ MONDAY_GROUP_ID = require_env("MONDAY_GROUP_ID")
 
 # ── Gemini and Gmail ──────────────────────────────────────────
 GEMINI_MODEL = "gemini-3.5-flash-lite"
+GEMINI_REQUESTS_PER_MINUTE = 15  # free-tier limit
 MAX_EMAILS_PER_RUN = 20
 
 # ── Classification ────────────────────────────────────────────
