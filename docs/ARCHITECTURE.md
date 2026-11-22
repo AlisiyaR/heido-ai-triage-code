@@ -53,7 +53,7 @@ flowchart TD
 | `classifier.py` | Calls Gemini, validates the answer, retries temporary errors, respects the rate limit | Built |
 | `router.py` | Category → employee, a fixed rule | Built |
 | `evaluate.py` | Measures accuracy on the 30 test emails, without Gmail or monday | Built |
-| `email_reader.py` | Reads up to 20 unread INBOX emails (subject, body, sender, date, attachments) and marks them as read | Planned |
+| `email_reader.py` | Reads up to 20 unread INBOX emails (subject, body, sender, date, attachments) and marks them as read | Built |
 | `monday_client.py` | Creates the monday item with all 10 columns and uploads attachments | Planned |
 | `mailer.py` | Sends the confirmation email through the Gmail API | Planned |
 | `main.py` | Runs the full pipeline, with logging, `--dry-run`, `--once` and a repeat interval | Planned |
@@ -109,6 +109,20 @@ flowchart TD
 - Prints a report per file and a **Combined** report: accuracy for category, priority and assignee, errors, and mismatches.
 - **Errors are kept apart from wrong answers.** A mismatch means the AI answered differently than expected; an error (e.g. a 429) means there was no answer at all. Accuracy counts only answered emails. See [ADR 0010](adr/0010-evaluation-excludes-errors.md).
 
+### 4.6 Reading emails: `email_reader.py`
+- Uses the Gmail service from `gmail_client.py`. The service is passed in as a parameter, so `main.py` creates it once and reuses it for reading and sending.
+- Two small data classes hold the result:
+  - `Email`: `message_id`, `subject`, `body`, `from_name`, `from_email`, `received_at` (UTC), `attachments`
+  - `Attachment`: `filename`, `mime_type`, `data` (the file's bytes)
+- `fetch_unread(service)` asks Gmail for up to 20 messages with both the `INBOX` and `UNREAD` labels. Gmail returns the newest first, so the list is reversed and the oldest are handled first. Reading an email does **not** mark it as read.
+- `parse_message()` builds an `Email` from Gmail's raw data:
+  - **Sender:** `"Dana Cohen <dana@x.com>"` is split into name and address.
+  - **Time:** Gmail's `internalDate` (milliseconds since 1970) becomes a UTC date and time.
+  - **Body:** the first plain-text part; if the email is HTML only, the HTML with tags removed. The text is decoded with the charset the email declares (e.g. Hebrew `windows-1255`).
+  - **Attachments:** every file in the email, **including images pasted into the body** (like Make's "has attachment or media"). An image without a name gets one, e.g. `inline_1.png`. Small files come inside the message; larger ones are downloaded separately.
+- `mark_as_read(service, message_id)` removes the `UNREAD` label. `main.py` calls it once the monday item exists ([ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
+- The rules for picking the body, the attachments and the order are in [ADR 0011](adr/0011-email-parsing-rules.md).
+
 ## 5. External services
 
 | Service | Used for | Access | Credentials |
@@ -131,7 +145,7 @@ flowchart TD
 
 - **Gemini rate limit (15 requests per minute, free tier).** `wait_for_rate_limit()` runs before every Gemini call, retries included, and keeps calls at least 4 seconds apart (60 / 15). Both `evaluate.py` and the pipeline call Gemini only through `classify()`, so both are protected. 20 emails take at least about 80 seconds. The limit works inside one running program only. See [ADR 0005](adr/0005-client-side-gemini-rate-limit.md).
 - **Retries.** Only temporary errors are retried: 429 (rate limit) and 503 (overloaded), up to 3 attempts. The wait is Google's `retryDelay` + 1 second when given, otherwise 2s then 4s. If Google asks for more than 60 seconds (usually the daily quota), the call fails instead of waiting. Any other error (e.g. a wrong API key) fails immediately. See [ADR 0004](adr/0004-retry-only-temporary-errors.md).
-- **Emails per run.** At most 20 (`MAX_EMAILS_PER_RUN`; Make used 11).
+- **Emails per run.** At most 20 (`MAX_EMAILS_PER_RUN`; Make used 11), oldest of those first. With more than 20 unread, the 20 newest are taken and the rest wait for the next run ([ADR 0011](adr/0011-email-parsing-rules.md)).
 - **Planned in `main.py`:**
   - Each email is processed on its own, so one failing email does not stop the others.
   - An email is marked as read once its monday item exists. If classification or item creation fails, it stays unread and is retried next run. A failed upload or confirmation is logged but not retried, to avoid duplicate tickets. See [ADR 0009](adr/0009-mark-as-read-after-item-created.md).
@@ -158,6 +172,7 @@ heido-ai-triage-code/
 ├── classifier.py        # Gemini call, validation, retry, rate limit
 ├── router.py            # category → employee
 ├── evaluate.py          # accuracy test
+├── email_reader.py      # read unread emails and attachments
 ├── test-data/           # 30 test emails (from the Make version)
 ├── docs/
 │   ├── ARCHITECTURE.md  # this file

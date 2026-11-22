@@ -62,3 +62,21 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **`sum(1 for ... if ...)`**: counts how many items match a condition.
 - **`except Exception as error`**: catches any error, so one bad row does not stop the whole run.
 - **`f"{value:.0%}"`**: formats a number like 0.933 as `93%`.
+
+
+## `email_reader.py`
+
+- **`@dataclass`**: put above a class, it writes the constructor (`__init__`) and a readable print-out for you, from the field list. Like a Java class with only fields, a constructor and `toString()`, but in a few lines. Similar to a Java `record`.
+- **Type hints** (`subject: str`, `attachments: list[Attachment]`): say what type a field should hold. Python does not enforce them at runtime; they help readers and editors.
+- **`field(default_factory=list)`**: gives each new object its own empty list. Writing `= []` directly would make every object share the same list.
+- **`bytes`**: raw binary data (e.g. a PDF file), not text. `.decode("utf-8")` turns bytes into text.
+- **`base64.urlsafe_b64decode`**: Gmail sends file and text content encoded as base64url (only letters, digits, `-` and `_`). This turns it back into bytes. The `"=" * (-len(data) % 4)` adds the padding that base64 needs.
+- **Recursion**: a function that calls itself. An email is a tree of parts (a part can contain parts), so `find_text_part` and `collect_attachments` call themselves on each sub-part.
+- **`datetime.fromtimestamp(seconds, tz=timezone.utc)`**: turns "seconds since 1970" into a date and time, in UTC. Gmail gives milliseconds, so we divide by 1000.
+- **`email.utils.parseaddr`**: splits `"Dana Cohen <dana@x.com>"` into `("Dana Cohen", "dana@x.com")`.
+- **Tuple unpacking** (`from_name, from_email = parseaddr(...)`): puts each value of a pair into its own variable in one line.
+- **`dict.get(key, default)` on nested data**: `part.get("body", {}).get("data")` reads a value two levels deep without crashing if a level is missing.
+- **`next((... for ... if ...), "")`**: returns the first item that matches, or `""` if none does.
+- **`re.sub(pattern, replacement, text)`**: replaces every match of a regular expression. `(?i)` means ignore upper/lower case; `(?s)` lets `.` match line breaks too.
+- **`f"{email.received_at:%Y-%m-%d %H:%M}"`**: formats a date inside an f-string.
+- **Import inside `if __name__ == "__main__":`**: `gmail_client` is only needed by the self-test, so it is imported there and not when another file imports `email_reader`.

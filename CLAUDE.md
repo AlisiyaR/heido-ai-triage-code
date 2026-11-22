@@ -53,8 +53,8 @@ This repository is the code-based version of Heido. The original no-code version
 
 Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`
-- Not built yet: `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`
+- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`, `email_reader.py`
+- Not built yet: `monday_client.py`, `mailer.py`, `main.py`
 - `README.md`: short overview with a work-in-progress status; full setup and run instructions come in the final step
 - Docs: `docs/ARCHITECTURE.md` (how the system is built), `docs/adr/` (one file per decision), `docs/python-concepts.md`, `docs/build-brief.md` (requirements)
 
@@ -65,6 +65,7 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
     python gmail_client.py   # first run opens a browser sign-in and creates token.json
     python classifier.py     # classifies one sample email
     python evaluate.py       # accuracy on both test CSVs in test-data/ (add --out results.csv to save)
+    python email_reader.py   # lists unread INBOX emails; does not mark them as read
 
 ### Credentials and config
 - `.env` (copied from `.env.example`): `GEMINI_API_KEY`, `MONDAY_API_TOKEN`, `MONDAY_BOARD_ID`, `MONDAY_GROUP_ID`. Loaded by `config.py`.
