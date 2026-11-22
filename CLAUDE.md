@@ -46,7 +46,7 @@ This repository is the code-based version of Heido. The original no-code version
 
 ### Learning
 - Explain what you're doing in simple words.
-- After each feature, update docs/learning-notes.md with a simple explanation in English of what each part does and why, for a beginner.
+- After each feature, update docs/ARCHITECTURE.md (simple English, for a beginner) and add a numbered ADR in docs/adr/ (copy 0000-template.md) for each new decision. Add new Python concepts to docs/python-concepts.md.
 - If something is unclear, ask me instead of guessing.
 
 ## Status
@@ -55,6 +55,7 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
 
 - Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`
 - Not built yet: `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`, `README.md`
+- Docs: `docs/ARCHITECTURE.md` (how the system is built), `docs/adr/` (one file per decision), `docs/python-concepts.md`, `docs/build-brief.md` (requirements)
 
 ### Setup and run
     py -3.13 -m venv .venv
