@@ -53,8 +53,7 @@ This repository is the code-based version of Heido. The original no-code version
 
 Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`
-- Not built yet: `main.py`
+- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`
 - `README.md`: short overview with a work-in-progress status; full setup and run instructions come in the final step
 - Docs: `docs/ARCHITECTURE.md` (how the system is built), `docs/adr/` (one file per decision), `docs/python-concepts.md`, `docs/build-brief.md` (requirements)
 
@@ -68,6 +67,9 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
     python email_reader.py   # lists unread INBOX emails; does not mark them as read
     python monday_client.py  # creates one [TEST] item in the configured group and uploads a small file
     python mailer.py         # asks for an address and sends one test confirmation (refuses the support inbox)
+    python main.py --dry-run --once   # rehearsal: classify unread emails, change nothing
+    python main.py --once             # process unread emails once (exit code 1 if any failed)
+    python main.py                    # run every 5 minutes until Ctrl+C (--interval N to change)
 
 ### Credentials and config
 - `.env` (copied from `.env.example`): `GEMINI_API_KEY`, `MONDAY_API_TOKEN`, `MONDAY_BOARD_ID`, `MONDAY_GROUP_ID`. Loaded by `config.py`.
@@ -80,5 +82,5 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
 - Gemini calls are limited to `config.GEMINI_REQUESTS_PER_MINUTE` (15, free tier): `classifier.py` spaces calls 4s apart and, on 429/503, waits Google's `retryDelay` (max 60s).
 - monday.com column IDs are in `config.COLUMNS`.
 
-### Email fetching (planned)
-Polling: `main.py` runs every few minutes and reads up to 20 unread INBOX emails through the Gmail API. An email is marked as read once its monday item exists, so it is never processed twice.
+### Email fetching and running
+Polling: `main.py` runs every 5 minutes (`--interval N`) and reads up to 20 unread INBOX emails through the Gmail API. An email is marked as read once its monday item exists, so it is never processed twice. Emails sent by the inbox itself are skipped. Logs go to `logs/heido.log`. With `--once`, the exit code is 1 if any email failed.

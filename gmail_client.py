@@ -9,8 +9,8 @@ from googleapiclient.discovery import build
 
 # gmail.modify lets us read emails, mark them as read and send replies.
 SCOPES = ["https://www.googleapis.com/auth/gmail.modify"]
-CREDENTIALS_FILE = "credentials.json"  # identifies the app (from Google Cloud)
-TOKEN_FILE = "token.json"  # the saved login, created after the first sign-in
+CREDENTIALS_FILE = os.path.join(os.path.dirname(__file__), "credentials.json")  # identifies the app
+TOKEN_FILE = os.path.join(os.path.dirname(__file__), "token.json")  # saved login, created on first sign-in
 
 
 def get_gmail_service():

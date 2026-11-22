@@ -109,3 +109,19 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **`input("question ")`**: shows a question in the terminal and waits for the user to type an answer. Used only in the self-test.
 - **`.strip()` and `.lower()`**: remove spaces at both ends, and make text lower case. Used to compare two email addresses safely ("Heido.Support@Gmail.com" and "heido.support@gmail.com" are the same address).
 - **Importing a function from another module** (`from email_reader import strip_html`): reuses code instead of writing it twice.
+
+
+## `main.py`
+
+- **`argparse` flags**: `action="store_true"` makes an on/off switch (`--once` present means `True`); `type=int` turns `--interval 10` into the number 10. `--dry-run` becomes `args.dry_run` (the dash becomes an underscore).
+- **`logging.basicConfig(...)`**: sets up logging once for the whole program: the level (INFO and above), the line format (`%(asctime)s %(levelname)s %(message)s`) and the **handlers**, which decide where lines go. Here: `StreamHandler` (the console) and `FileHandler` (a file).
+- **Loggers in other files**: `classifier.py` uses `logging.getLogger(__name__)`. Because `main.py` configured logging, those warnings also appear on screen and in the log file, with no extra code.
+- **Logger names and `setLevel`**: loggers are arranged by name like folders. `logging.getLogger("google_genai").setLevel(logging.WARNING)` hides that library's INFO lines, and also those of `google_genai.models` and every other "child" logger under that name. Our own loggers are not affected.
+- **`logger.exception("...")`**: like `logger.error`, but also writes the full error details (the traceback). Use it inside `except`.
+- **`os.makedirs(path, exist_ok=True)`**: creates a folder (and its parents); `exist_ok=True` means "no error if it already exists".
+- **`while True:` + `time.sleep(seconds)`**: an endless loop that pauses between rounds. It ends only by `return`, `break` or an exception.
+- **`KeyboardInterrupt`**: the exception Python raises when you press Ctrl+C. Catching it lets the program stop cleanly with a log line instead of a long error.
+- **Nested `try/except`**: the inner one (around each email) keeps the loop going when one email fails; the outer one (around the whole loop) catches Ctrl+C.
+- **`sys.exit(code)`**: ends the program with an exit code. `0` means success, anything else means failure. In PowerShell, `echo $LASTEXITCODE` shows the code of the last command.
+- **Module-level constants as named results** (`CREATED`, `SKIPPED`): names instead of repeated strings, so a typo becomes an error instead of a silent bug.
+- **`counts[result] += 1`**: uses the returned value as a dictionary key to count each kind of result.

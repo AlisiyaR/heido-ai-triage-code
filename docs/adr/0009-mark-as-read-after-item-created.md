@@ -1,6 +1,6 @@
 # 0009. Mark an email as read once its monday item exists
 
-- **Status:** Accepted (to be implemented in `main.py`)
+- **Status:** Accepted (implemented in `main.py`)
 - **Date:** 2026-11-18
 
 ## Context

@@ -16,7 +16,7 @@ The full requirements are in [build-brief.md](build-brief.md). The reasons behin
 
 ## 2. Data flow
 
-### 2.1 Main pipeline (run by `main.py`, planned)
+### 2.1 Main pipeline (run by `main.py`)
 
 ```mermaid
 flowchart TD
@@ -56,7 +56,7 @@ flowchart TD
 | `email_reader.py` | Reads up to 20 unread INBOX emails (subject, body, sender, date, attachments) and marks them as read | Built |
 | `monday_client.py` | Creates the monday item with all 10 columns and uploads attachments | Built |
 | `mailer.py` | Sends the confirmation email through the Gmail API | Built |
-| `main.py` | Runs the full pipeline, with logging, `--dry-run`, `--once` and a repeat interval | Planned |
+| `main.py` | Runs the full pipeline, with logging, `--dry-run`, `--once` and a repeat interval | Built |
 
 ## 4. Component details
 
@@ -153,6 +153,41 @@ flowchart TD
 - Errors are passed up to `main.py`, which logs them without retrying (the monday item already exists, [ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
 - **Email-loop guard:** a confirmation sent to the support inbox itself would come back as a new unread email and become a ticket. The self-test refuses that address, and `main.py` will skip emails sent by the inbox itself. See [ADR 0013](adr/0013-confirmation-email-format.md).
 
+### 4.9 Running the pipeline: `main.py`
+- **How to run:**
+  - `python main.py`: checks the inbox every 5 minutes until Ctrl+C (`--interval N` changes the minutes).
+  - `python main.py --once`: one run, then exit.
+  - `python main.py --dry-run --once`: a rehearsal. Reads and classifies, logs what *would* be created; writes nothing to monday, sends nothing, marks nothing as read.
+- **Start-up:** connects to Gmail **once** and reads the inbox's own address (for the loop guard).
+- **For each unread email** (`process_email`), in this order:
+  1. Sent by the support inbox itself? Skip it (and mark it as read).
+  2. Classify with Gemini (`classifier.classify`), with the rate limit and retries.
+  3. Pick the employee (`router.assign`).
+  4. Dry run? Log the result and stop here.
+  5. Create the monday item (`monday_client.create_item`).
+  6. **Mark the email as read right away** (ADR 0009).
+  7. Upload each attachment; a failed file is logged and the rest continue.
+  8. Send the confirmation; a failure is logged.
+  9. Log one summary line.
+- **What a failure does:**
+
+  | Fails at | Result |
+  |---|---|
+  | Steps 2–5 (Gemini, monday item) | `ERROR ... failed (left unread)`. The email stays unread and is retried next run. Other emails continue. |
+  | Step 7 (one file) | Logged; other files and the confirmation continue. The ticket exists without that file. |
+  | Step 8 (confirmation) | Logged as `confirmation=failed`. The ticket exists; the customer gets no email. |
+  | Whole run (e.g. no internet) | Logged; the loop tries again at the next interval. |
+
+- **Logs:** every line goes to the console and to `logs/heido.log` (git-ignored, next to `main.py`). One line per email, for example:
+
+  ```
+  2026-11-22 14:03:12 INFO msg=18c4... category='Hardware Issues' priority=High assignee='Ryan Mitchell' item=2084731552 files=1/1 confirmation=sent
+  ```
+
+  Each run ends with `Run finished: N email(s), X created, Y skipped, Z dry run, W failed`. Customer email text is not written to the log.
+  The Google and HTTP libraries (`googleapiclient`, `google_genai`, `httpx2`) are set to WARNING, so their routine INFO lines (one per request) are hidden; their warnings and errors still appear.
+- **Ready for a scheduler:** with `--once`, the exit code is `0` if no email failed and `1` otherwise (an email that was left unread, or a failed run). File paths (`credentials.json`, `token.json`, `prompt.txt`, `.env`, `logs/`) are found next to the code, so the program works when started from any folder. See [ADR 0014](adr/0014-polling-loop-and-per-email-isolation.md).
+
 ## 5. External services
 
 | Service | Used for | Access | Credentials |
@@ -176,9 +211,11 @@ flowchart TD
 - **Gemini rate limit (15 requests per minute, free tier).** `wait_for_rate_limit()` runs before every Gemini call, retries included, and keeps calls at least 4 seconds apart (60 / 15). Both `evaluate.py` and the pipeline call Gemini only through `classify()`, so both are protected. 20 emails take at least about 80 seconds. The limit works inside one running program only. See [ADR 0005](adr/0005-client-side-gemini-rate-limit.md).
 - **Retries.** Only temporary errors are retried: 429 (rate limit) and 503 (overloaded), up to 3 attempts. The wait is Google's `retryDelay` + 1 second when given, otherwise 2s then 4s. If Google asks for more than 60 seconds (usually the daily quota), the call fails instead of waiting. Any other error (e.g. a wrong API key) fails immediately. See [ADR 0004](adr/0004-retry-only-temporary-errors.md).
 - **Emails per run.** At most 20 (`MAX_EMAILS_PER_RUN`; Make used 11), oldest of those first. With more than 20 unread, the 20 newest are taken and the rest wait for the next run ([ADR 0011](adr/0011-email-parsing-rules.md)).
-- **Planned in `main.py`:**
+- **Per email (`main.py`):**
   - Each email is processed on its own, so one failing email does not stop the others.
   - An email is marked as read once its monday item exists. If classification or item creation fails, it stays unread and is retried next run. A failed upload or confirmation is logged but not retried, to avoid duplicate tickets. See [ADR 0009](adr/0009-mark-as-read-after-item-created.md).
+  - Emails sent by the support inbox itself are skipped and marked as read (loop guard, [ADR 0013](adr/0013-confirmation-email-format.md)).
+- **Whole run:** if a run fails (e.g. no internet), the loop logs it and tries again at the next interval. With `--once`, the exit code is `1`.
 
 ## 8. Evaluation results
 
@@ -205,6 +242,7 @@ heido-ai-triage-code/
 ├── email_reader.py      # read unread emails and attachments
 ├── monday_client.py     # create the monday item, upload files
 ├── mailer.py            # send the confirmation email
+├── main.py              # runs the full pipeline
 ├── test-data/           # 30 test emails (from the Make version)
 ├── docs/
 │   ├── ARCHITECTURE.md  # this file

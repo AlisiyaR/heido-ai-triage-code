@@ -28,4 +28,4 @@ In `mailer.py`:
 - Customer or AI text cannot inject HTML into the confirmation.
 - The confirmation starts a new thread, so the customer sees two threads (their request and our confirmation).
 - A failed confirmation means the customer gets no email for that ticket; the log line shows which one.
-- The loop guard depends on `main.py` comparing each sender with the inbox's address; that check must be in the `main.py` step.
+- The loop guard depends on `main.py` comparing each sender with the inbox's address (case-insensitive); this is implemented in `main.process_email()`.
