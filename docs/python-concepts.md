@@ -80,3 +80,19 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **`re.sub(pattern, replacement, text)`**: replaces every match of a regular expression. `(?i)` means ignore upper/lower case; `(?s)` lets `.` match line breaks too.
 - **`f"{email.received_at:%Y-%m-%d %H:%M}"`**: formats a date inside an f-string.
 - **Import inside `if __name__ == "__main__":`**: `gmail_client` is only needed by the self-test, so it is imported there and not when another file imports `email_reader`.
+
+
+## `monday_client.py`
+
+- **`requests.post(url, ...)`**: sends an HTTP POST request and returns a response object. `json=` sends a dict as JSON; `data=` sends form fields; `files=` uploads files; `headers=` adds headers like `Authorization`; `timeout=` stops waiting after N seconds instead of hanging forever.
+- **`response.json()`**: turns the answer's JSON text into a Python dict. It raises `ValueError` if the answer is not JSON.
+- **`response.raise_for_status()`**: raises an error if the HTTP status is 400 or higher (e.g. 401 Unauthorized, 500 Server Error).
+- **`json.dumps(obj)`**: turns a dict into a JSON string. monday wants `column_values` as a JSON *string*, not as a nested object.
+- **GraphQL**: a query language for APIs. You send one request with a "query" (or "mutation", for changes) that says exactly what to do and which fields to return, e.g. `create_item(...) { id }` returns only the new item's ID.
+- **GraphQL variables** (`$itemName`): placeholders in the query, with the real values sent separately. Like a `PreparedStatement` with `?` in Java JDBC: user text can never break the query.
+- **Multipart upload**: the format browsers use to upload files in a form. `requests` builds it when you pass `files={"field": (filename, bytes, mime_type)}`.
+- **`f"{{ }}"` in f-strings**: double braces produce a literal `{` or `}`, because single braces mean "insert a value here".
+- **`datetime.strftime("%Y-%m-%d")`**: formats a date as text, e.g. `2026-11-22`. `%H:%M:%S` gives the time.
+- **`a or b` as a fallback**: returns `a` if it is not empty, otherwise `b`. Used for `email.from_name or email.from_email`.
+- **`int("123")`**: turns text into a whole number; it raises `ValueError` for text like `"12; drop"`. Used as a safety check before putting the item ID into a query.
+- **Duck typing**: `build_column_values` does not import the `Email` or `Classification` classes; it only uses their attributes (`email.body`, `classification.title`). Any object with those attributes works, which also makes testing easy.

@@ -54,7 +54,7 @@ flowchart TD
 | `router.py` | Category → employee, a fixed rule | Built |
 | `evaluate.py` | Measures accuracy on the 30 test emails, without Gmail or monday | Built |
 | `email_reader.py` | Reads up to 20 unread INBOX emails (subject, body, sender, date, attachments) and marks them as read | Built |
-| `monday_client.py` | Creates the monday item with all 10 columns and uploads attachments | Planned |
+| `monday_client.py` | Creates the monday item with all 10 columns and uploads attachments | Built |
 | `mailer.py` | Sends the confirmation email through the Gmail API | Planned |
 | `main.py` | Runs the full pipeline, with logging, `--dry-run`, `--once` and a repeat interval | Planned |
 
@@ -123,6 +123,27 @@ flowchart TD
 - `mark_as_read(service, message_id)` removes the `UNREAD` label. `main.py` calls it once the monday item exists ([ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
 - The rules for picking the body, the attachments and the order are in [ADR 0011](adr/0011-email-parsing-rules.md).
 
+### 4.7 Creating the monday task: `monday_client.py`
+- Talks to the monday.com **GraphQL API** with `requests`: one HTTPS request with a short "query" saying what to do; monday answers with JSON. The token from `.env` goes in the `Authorization` header.
+- `build_column_values(email, classification, assignee)` prepares the 9 column values (it does not call monday, so it can be tested offline):
+
+  | Column | ID | Value |
+  |---|---|---|
+  | Category | `color_mm91tmat` | the AI's category, as a status label (created if missing) |
+  | Priority | `priority` | `High` / `Medium` / `Low` label |
+  | Status | `project_status` | `Not Started` label |
+  | Assigned to | `dropdown_mm91ncnc` | the employee from `router.py` (one label) |
+  | Original Message | `long_text_mm91q00k` | the email body |
+  | Customer Email | `email_mm91b42r` | the sender's address |
+  | Received At | `date_mm91b4bh` | date and time, UTC |
+  | Summary | `text_mm94sk4j` | the AI's one-sentence summary |
+  | Customer Name | `text_mm94v9bp` | the sender's name, or the address if there is no name |
+
+- `create_item(email, classification, assignee)` creates the item in the board and group from `.env`, named with the AI's title, and returns the **item ID**, which is the ticket number. Values are sent as GraphQL **variables**, never pasted into the query text, so quotes in an email cannot break the request.
+- `upload_file(item_id, attachment)` uploads one file to the **Files** column (`file`) through monday's file endpoint. It is called once per attachment.
+- `check_response()` turns any monday error (HTTP error, `errors` list or `error_message`) into a `RuntimeError` with monday's own message. There are no retries for monday calls.
+- Status and dropdown values are set by **label text**, not by Make's label numbers. See [ADR 0012](adr/0012-monday-labels-by-text.md).
+
 ## 5. External services
 
 | Service | Used for | Access | Credentials |
@@ -173,6 +194,7 @@ heido-ai-triage-code/
 ├── router.py            # category → employee
 ├── evaluate.py          # accuracy test
 ├── email_reader.py      # read unread emails and attachments
+├── monday_client.py     # create the monday item, upload files
 ├── test-data/           # 30 test emails (from the Make version)
 ├── docs/
 │   ├── ARCHITECTURE.md  # this file
