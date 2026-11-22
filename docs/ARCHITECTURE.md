@@ -16,26 +16,32 @@ The full requirements are in [build-brief.md](build-brief.md). The reasons behin
 
 ## 2. Data flow
 
-```mermaid
-flowchart LR
-    G[(Gmail inbox)] -->|unread emails| R[email_reader.py]
-    R -->|subject + body| C[classifier.py]
-    C <-->|prompt / JSON| AI[(Google Gemini)]
-    C -->|category| RT[router.py]
-    RT -->|employee| M[monday_client.py]
-    C -->|title, summary, priority| M
-    R -->|sender, date, body, attachments| M
-    M <-->|GraphQL| MB[(monday.com board)]
-    M -->|item ID| ML[mailer.py]
-    ML -->|confirmation| G
-    R -.->|mark as read| G
+### 2.1 Main pipeline (run by `main.py`, planned)
 
-    T[("test-data/*.csv")] -.-> E[evaluate.py]
-    E -.->|subject + body| C
-    E -.-> RT
+```mermaid
+flowchart TD
+    G[(Gmail inbox)] -->|unread email| R[email_reader.py]
+    R -->|subject + body| C["classifier.py<br/>(Gemini)"]
+    C -->|category| RT[router.py]
+    RT -->|employee| M["monday_client.py<br/>(monday.com)"]
+    M -->|item ID| ML[mailer.py]
+    ML --> CE([Confirmation email])
 ```
 
-Solid lines are the live pipeline, run by `main.py` (planned). Dotted lines on the right are the offline accuracy test: `evaluate.py` uses the same classifier and router, but no Gmail and no monday.
+Not shown, to keep the diagram simple:
+- `monday_client.py` also gets the title, summary and priority from the classifier, and the sender, date, body and attachments from `email_reader.py`.
+- The email is marked as read once its monday item exists ([ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
+
+### 2.2 Evaluation (offline accuracy test)
+
+```mermaid
+flowchart TD
+    T[("test-data/*.csv")] -->|30 test emails| E[evaluate.py]
+    E -->|subject + body| CR["classifier.py + router.py"]
+    CR -->|vs. expected| A([Accuracy report])
+```
+
+`evaluate.py` uses the same classifier and router as the pipeline, but no Gmail and no monday.
 
 ## 3. Components
 
