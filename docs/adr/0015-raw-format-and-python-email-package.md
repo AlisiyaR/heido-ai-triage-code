@@ -13,7 +13,7 @@ The self-review of the code found that Python's standard library already does al
   - subject and sender are decoded automatically;
   - `get_body(("plain", "html"))` picks the body, `get_content()` decodes its charset;
   - `walk()` goes through every part to collect the files.
-- Keep the **rules of [ADR 0011](0011-email-parsing-rules.md) unchanged**: plain text first with an HTML fallback (still `strip_html()`), every file counts including pasted images, nameless files get `inline_N.<ext>`, up to 20 unread emails, oldest first.
+- Keep the **rules of [ADR 0011](0011-email-parsing-rules.md) unchanged**: plain text first with an HTML fallback (still `strip_html()`), every file counts including pasted images, nameless files get `inline_N.<ext>`, up to 15 unread emails (`MAX_EMAILS_PER_RUN`), oldest first.
 - Develop it on a separate branch; merge into `main` only after a re-test with real emails.
 
 ## Alternatives

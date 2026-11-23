@@ -88,7 +88,7 @@ pip install -r requirements.txt
 | Command | What it does |
 |---|---|
 | `python main.py --dry-run --once` | Rehearsal: reads and classifies unread emails and logs what *would* be created. Changes nothing. |
-| `python main.py --once` | Processes all unread emails (up to 20) once, then exits. |
+| `python main.py --once` | Processes all unread emails (up to 15) once, then exits. |
 | `python main.py` | Checks the inbox every 5 minutes until Ctrl+C. |
 | `python main.py --interval 10` | Same, every 10 minutes. |
 
@@ -153,8 +153,8 @@ Each module has a self-test:
 
 - **Runs only while the program runs.** Closing the terminal stops it (Make runs on Make's servers). `main.py --once` is ready for a scheduler such as Windows Task Scheduler.
 - **Gmail token in "Testing" mode** expires after 7 days; running unattended for longer needs the OAuth app published to "Production".
-- **More than 20 unread emails:** Gmail returns the 20 newest; the rest are processed in later runs.
-- **Rate limit:** at most 15 Gemini calls per minute, so 20 emails take at least about 80 seconds.
+- **More than 15 unread emails:** Gmail returns the 15 newest; the rest are processed in later runs.
+- **Rate limit:** at most 15 Gemini calls per minute, so a full run of 15 emails takes at least about 60 seconds.
 
 ## License
 

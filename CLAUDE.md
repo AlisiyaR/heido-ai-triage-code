@@ -92,4 +92,4 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
 - monday.com column IDs are in `config.COLUMNS`.
 
 ### Email fetching and running
-Polling: `main.py` runs every 5 minutes (`--interval N`) and reads up to 20 unread INBOX emails through the Gmail API. An email is marked as read once its monday item exists, so it is never processed twice. Emails sent by the inbox itself are skipped. Logs go to `logs/heido.log`. With `--once`, the exit code is 1 if any email failed.
+Polling: `main.py` runs every 5 minutes (`--interval N`) and reads up to 15 unread INBOX emails through the Gmail API. An email is marked as read once its monday item exists, so it is never processed twice. Emails sent by the inbox itself are skipped. Logs go to `logs/heido.log`. With `--once`, the exit code is 1 if any email failed.
