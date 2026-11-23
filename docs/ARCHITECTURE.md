@@ -81,6 +81,7 @@ flowchart TD
   2. If there is no valid login: refresh it quietly if it only expired; otherwise open the browser to sign in.
   3. Save the login to `token.json` for next time.
   4. Return a `service` object used to talk to Gmail.
+- `get_own_address(service)` returns the signed-in inbox's address. `main.py` uses it for the loop guard, and the `mailer.py` self-test uses it to refuse the support address.
 - While the Google Cloud app is in **Testing** mode, `token.json` expires after 7 days. Delete it and run again to sign in.
 
 ### 4.3 AI classification: `prompt.txt` + `classifier.py`
@@ -166,8 +167,8 @@ flowchart TD
   4. Dry run? Log the result and stop here.
   5. Create the monday item (`monday_client.create_item`).
   6. **Mark the email as read right away** (ADR 0009).
-  7. Upload each attachment; a failed file is logged and the rest continue.
-  8. Send the confirmation; a failure is logged.
+  7. Upload each attachment (`upload_attachments`); a failed file is logged and the rest continue.
+  8. Send the confirmation (`try_send_confirmation`); a failure is logged.
   9. Log one summary line.
 - **What a failure does:**
 

@@ -78,6 +78,27 @@ def process_email(service, email, own_address, dry_run):
     email_reader.mark_as_read(service, email.message_id)  # right away (ADR 0009)
 
     # From here on, failures are logged but not raised: the ticket already exists.
+    uploaded = upload_attachments(email, item_id)
+    confirmation = try_send_confirmation(service, email, item_id, classification.title)
+
+    logger.info(
+        "msg=%s category=%r priority=%s assignee=%r item=%s files=%d/%d confirmation=%s",
+        email.message_id, classification.category, classification.priority, assignee,
+        item_id, uploaded, len(email.attachments), confirmation,
+    )
+    return CREATED
+
+
+def upload_attachments(email, item_id):
+    """Upload each attachment to the monday item. A failed file is logged and skipped.
+
+    Args:
+        email: an email_reader.Email.
+        item_id: the monday item ID.
+
+    Returns:
+        The number of files uploaded.
+    """
     uploaded = 0
     for attachment in email.attachments:
         try:
@@ -86,20 +107,27 @@ def process_email(service, email, own_address, dry_run):
         except Exception as error:
             logger.error("msg=%s item=%s upload of %r failed: %s",
                          email.message_id, item_id, attachment.filename, error)
+    return uploaded
 
+
+def try_send_confirmation(service, email, item_id, title):
+    """Send the confirmation email. A failure is logged instead of raised.
+
+    Args:
+        service: a Gmail API service.
+        email: an email_reader.Email (the confirmation goes to its sender).
+        item_id: the monday item ID (the ticket number).
+        title: the ticket topic.
+
+    Returns:
+        "sent" or "failed".
+    """
     try:
-        mailer.send_confirmation(service, email.from_email, item_id, classification.title)
-        confirmation = "sent"
+        mailer.send_confirmation(service, email.from_email, item_id, title)
+        return "sent"
     except Exception as error:
         logger.error("msg=%s item=%s confirmation failed: %s", email.message_id, item_id, error)
-        confirmation = "failed"
-
-    logger.info(
-        "msg=%s category=%r priority=%s assignee=%r item=%s files=%d/%d confirmation=%s",
-        email.message_id, classification.category, classification.priority, assignee,
-        item_id, uploaded, len(email.attachments), confirmation,
-    )
-    return CREATED
+        return "failed"
 
 
 def run_once(service, own_address, dry_run):
@@ -150,7 +178,7 @@ def main():
 
     try:
         service = gmail_client.get_gmail_service()
-        own_address = service.users().getProfile(userId="me").execute()["emailAddress"]
+        own_address = gmail_client.get_own_address(service)
     except Exception:
         logger.exception("Could not connect to Gmail")
         return 1

@@ -39,10 +39,14 @@ def get_gmail_service():
     return build("gmail", "v1", credentials=creds)
 
 
+def get_own_address(service):
+    """Return the email address of the signed-in inbox (the support inbox)."""
+    return service.users().getProfile(userId="me").execute()["emailAddress"]
+
+
 if __name__ == "__main__":
     # Self-test: prints only the account address and the unread count.
     service = get_gmail_service()
-    profile = service.users().getProfile(userId="me").execute()
     unread = service.users().labels().get(userId="me", id="INBOX").execute()
-    print(f"Connected as: {profile['emailAddress']}")
+    print(f"Connected as: {get_own_address(service)}")
     print(f"Unread emails in INBOX: {unread['messagesUnread']}")

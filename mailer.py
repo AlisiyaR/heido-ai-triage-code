@@ -44,7 +44,7 @@ if __name__ == "__main__":
     import gmail_client
 
     gmail = gmail_client.get_gmail_service()
-    own_address = gmail.users().getProfile(userId="me").execute()["emailAddress"]
+    own_address = gmail_client.get_own_address(gmail)
 
     recipient = input("Send a test confirmation to which address? ").strip()
     if recipient.lower() == own_address.lower():
