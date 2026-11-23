@@ -1,7 +1,7 @@
 # Final check – definition of done
 
 The project checked against the definition of done in the [build brief](build-brief.md) (§8).
-Checked on 2026-11-23.
+Checked on 2026-11-23, with prompt v2. Later the prompt was updated to v3 (English task title) and re-evaluated: 100% / 97% / 100% combined; see [ADR 0016](adr/0016-prompt-v3-english-title.md).
 
 ## Definition of done
 

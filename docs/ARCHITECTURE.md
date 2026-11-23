@@ -49,7 +49,7 @@ flowchart TD
 |---|---|---|
 | `config.py` | All settings in one place: secrets from `.env`, plus fixed constants (categories, routing table, monday column IDs, confirmation email, limits) | Built |
 | `gmail_client.py` | Signs in to the Gmail API with OAuth and returns a ready-to-use Gmail service | Built |
-| `prompt.txt` | The AI prompt (v2), with `{subject}` and `{body}` placeholders | Built |
+| `prompt.txt` | The AI prompt (v3), with `{subject}` and `{body}` placeholders | Built |
 | `classifier.py` | Calls Gemini, validates the answer, retries temporary errors, respects the rate limit | Built |
 | `router.py` | Category → employee, a fixed rule | Built |
 | `evaluate.py` | Measures accuracy on the 30 test emails, without Gmail or monday | Built |
@@ -86,7 +86,7 @@ flowchart TD
 
 ### 4.3 AI classification: `prompt.txt` + `classifier.py`
 - **Input:** only the email subject and body. The sender's address is never sent (data minimization). See [ADR 0007](adr/0007-send-only-subject-and-body-to-ai.md).
-- **Prompt:** stored in `prompt.txt`, so it can be improved without changing code. See [ADR 0006](adr/0006-prompt-in-separate-file.md).
+- **Prompt:** stored in `prompt.txt`, so it can be improved without changing code. See [ADR 0006](adr/0006-prompt-in-separate-file.md). It is **v3**: the brief's v2 plus "in English" for the title ([ADR 0016](adr/0016-prompt-v3-english-title.md)).
 - **Model:** `gemini-3.5-flash-lite`, thinking level LOW (as in Make).
 - **Response schema:** the Pydantic model `Classification` (`title`, `summary`, `category`, `priority`) is passed to Gemini, so it must return JSON in exactly that shape. The SDK turns it into a `Classification` object.
 - **Functions:**
@@ -94,6 +94,7 @@ flowchart TD
   - `call_gemini(prompt)` – the API call, with rate limiting and retries.
   - `validate(result)` – an unknown category becomes `Other / Unclassified`; an unknown priority becomes `Medium`. Each fix is logged as a warning. See [ADR 0003](adr/0003-structured-output-and-validation.md).
   - `wait_for_rate_limit()` and `get_retry_delay(error)` – see section 7.
+- **Language:** whatever language the customer writes in, the monday task is in English. Category, priority, status and assignee are fixed English lists; the summary and the title are English by the prompt. The **Original Message**, the customer's name and file names stay exactly as the customer wrote them. Tested with Hebrew and Swedish emails.
 
 ### 4.4 Routing: `router.py`
 - `assign(category)` looks the category up in `config.ROUTING`. This is a **fixed rule, not the AI**, like the Switch module in Make. See [ADR 0002](adr/0002-fixed-routing-not-ai.md).
@@ -222,15 +223,15 @@ flowchart TD
 
 ## 8. Evaluation results
 
-Prompt v2, `gemini-3.5-flash-lite`, run on 2026-11-22:
+Prompt v3, `gemini-3.5-flash-lite`, run on 2026-11-23 (4 emails hit Gemini overload errors in the full run and were rerun individually):
 
-| Set | Category | Priority | Assignee | Errors |
-|---|---|---|---|---|
-| Development (T01–T15) | 93% | 100% | 93% | 0 |
-| Holdout (H01–H15) | 100% | 93% | 100% | 0 |
-| **Combined (30)** | **97%** | **97%** | **97%** | **0** |
+| Set | Category | Priority | Assignee |
+|---|---|---|---|
+| Development (T01–T15) | 100% | 100% | 100% |
+| Holdout (H01–H15) | 100% | 93% | 100% |
+| **Combined (30)** | **100%** | **97%** | **100%** |
 
-These match the Make version exactly. One email is about 7% of a 15-email set, and the AI is not fully repeatable, so a run can differ by one email.
+The only miss is H10's priority, the known borderline case. Prompt v2 (and the Make version) scored 93/100/93, 100/93/100 and 97/97/97 combined; see [ADR 0016](adr/0016-prompt-v3-english-title.md). One email is about 7% of a 15-email set, and the AI is not fully repeatable, so a run can differ by one email.
 
 ## 9. Repository layout
 
@@ -238,7 +239,7 @@ These match the Make version exactly. One email is about 7% of a 15-email set, a
 heido-ai-triage-code/
 ├── config.py            # settings and constants
 ├── gmail_client.py      # Gmail API + OAuth
-├── prompt.txt           # AI prompt (v2)
+├── prompt.txt           # AI prompt (v3)
 ├── classifier.py        # Gemini call, validation, retry, rate limit
 ├── router.py            # category → employee
 ├── evaluate.py          # accuracy test

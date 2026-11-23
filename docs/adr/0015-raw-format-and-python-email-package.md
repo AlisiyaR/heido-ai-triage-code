@@ -27,3 +27,4 @@ The self-review of the code found that Python's standard library already does al
 - The behavior was checked side by side: the old and new readers gave identical results for a Hebrew email with a PDF and an attached `.txt`, a pasted image, an HTML-only email, an email with only an attachment, and an unknown charset.
 - An email's full size (up to Gmail's 25 MB limit) is downloaded in one response; at support-inbox volume this is fine.
 - Nothing changes for `main.py`, `mailer.py` or `monday_client.py`.
+- **Re-tested with real emails (2026-11-23):** a Hebrew subject and body, a PDF with a Hebrew file name, a Swedish subject and a pasted image were all read correctly by `email_reader.py`. A live `main.py --once` run created 4 monday tasks with all columns filled and the PDF and image uploaded, sent 4 confirmations and marked the emails as read.

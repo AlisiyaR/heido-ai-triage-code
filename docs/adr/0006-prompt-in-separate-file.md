@@ -1,7 +1,7 @@
 # 0006. Keep the AI prompt in `prompt.txt`, not in the code
 
 - **Status:** Accepted
-- **Date:** 2026-11-18
+- **Date:** 2026-11-18 (the prompt is now v3: [ADR 0016](0016-prompt-v3-english-title.md))
 
 ## Context
 The prompt (v2) is long (about 40 lines of categories, decision rules and priority rules) and was tuned through several versions in the Make project.

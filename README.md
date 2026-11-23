@@ -17,6 +17,8 @@ For every unread email in the support inbox, `main.py`:
 5. marks the email as read, so it is never processed twice;
 6. sends the customer a confirmation with the ticket number (`mailer.py`).
 
+The task on the board is always in English, even when the customer writes in another language (tested with Hebrew and Swedish). The original message is kept exactly as written.
+
 Details, diagrams and the reasons behind each design choice are in the [documentation](#documentation).
 
 ## Improvements over the Make version
@@ -33,15 +35,15 @@ Details, diagrams and the reasons behind each design choice are in the [document
 
 ## Evaluation results
 
-Classification accuracy on the same 30 test emails used for the Make version (prompt v2, `gemini-3.5-flash-lite`):
+Classification accuracy on the same 30 test emails used for the Make version (`gemini-3.5-flash-lite`):
 
-| Set | Category | Priority | Assignee |
-|---|---|---|---|
-| Development (15) | 93% | 100% | 93% |
-| Holdout (15) | 100% | 93% | 100% |
-| **Combined (30)** | **97%** | **97%** | **97%** |
+| Set | Make version and prompt v2 | **Prompt v3 (current)** |
+|---|---|---|
+| Development (15) | 93% / 100% / 93% | **100% / 100% / 100%** |
+| Holdout (15) | 100% / 93% / 100% | **100% / 93% / 100%** |
+| **Combined (30)** | 97% / 97% / 97% | **100% / 97% / 100%** |
 
-Same results as the Make version, with 0 errors. The test set includes vague emails and prompt-injection attempts. Rerun it with `python evaluate.py` (see below).
+(Category / Priority / Assignee.) Prompt v3 adds one rule to v2: the task title must be in English ([ADR 0016](docs/adr/0016-prompt-v3-english-title.md)). The only v3 miss is the priority of a deliberately borderline test email. The test set includes vague emails and prompt-injection attempts. Rerun it with `python evaluate.py` (see below).
 
 ## Tech stack
 
@@ -127,7 +129,7 @@ Each module has a self-test:
 ├── config.py            # settings and constants; secrets from .env
 ├── gmail_client.py      # Gmail API sign-in (OAuth)
 ├── email_reader.py      # read unread emails and attachments
-├── prompt.txt           # the AI prompt (v2)
+├── prompt.txt           # the AI prompt (v3)
 ├── classifier.py        # Gemini call, validation, retry, rate limit
 ├── router.py            # category → employee
 ├── monday_client.py     # create the monday item, upload files
@@ -142,7 +144,7 @@ Each module has a self-test:
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md): components, data flow diagrams, error handling, limits
-- [Architecture Decision Records](docs/adr/): why each design choice was made (15 decisions)
+- [Architecture Decision Records](docs/adr/): why each design choice was made (16 decisions)
 - [Final check](docs/final-check.md): the project checked against its definition of done
 - [Python concepts](docs/python-concepts.md): the Python ideas used in the code, explained
 - [Build brief](docs/build-brief.md): the original requirements
