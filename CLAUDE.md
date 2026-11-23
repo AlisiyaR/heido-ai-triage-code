@@ -53,9 +53,11 @@ This repository is the code-based version of Heido. The original no-code version
 
 Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__main__":`. There is no test framework or linter yet.
 
-- Built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`
-- `README.md`: short overview with a work-in-progress status; full setup and run instructions come in the final step
-- Docs: `docs/ARCHITECTURE.md` (how the system is built), `docs/adr/` (one file per decision), `docs/python-concepts.md`, `docs/build-brief.md` (requirements)
+- All components are built: `gmail_client.py`, `config.py`, `prompt.txt` + `classifier.py`, `router.py`, `evaluate.py`, `email_reader.py`, `monday_client.py`, `mailer.py`, `main.py`
+- `requirements.txt` pins the direct dependencies to the tested versions.
+- `README.md`: complete (setup, how to run, evaluation, limitations).
+- Docs: `docs/ARCHITECTURE.md` (how the system is built), `docs/adr/` (one file per decision), `docs/python-concepts.md`, `docs/final-check.md` (definition of done, with evidence), `docs/build-brief.md` (requirements)
+- All definition-of-done checks in `docs/final-check.md` have passed, including the manual failure and other-folder tests. Optional next step: scheduled runs.
 
 ### Setup and run
     py -3.13 -m venv .venv

@@ -248,6 +248,7 @@ heido-ai-triage-code/
 │   ├── ARCHITECTURE.md  # this file
 │   ├── adr/             # one file per design decision
 │   ├── python-concepts.md
+│   ├── final-check.md   # checked against the definition of done
 │   └── build-brief.md   # original requirements
 ├── requirements.txt
 ├── .env.example
