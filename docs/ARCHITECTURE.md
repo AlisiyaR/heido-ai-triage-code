@@ -213,7 +213,7 @@ flowchart TD
 ## 7. Error handling and limits
 
 - **Gemini rate limit (15 requests per minute, free tier).** `wait_for_rate_limit()` runs before every Gemini call, retries included, and keeps calls at least 4 seconds apart (60 / 15). Both `evaluate.py` and the pipeline call Gemini only through `classify()`, so both are protected. A full run of 15 emails takes at least about 60 seconds, so one run fits into the per-minute limit. The limit works inside one running program only. See [ADR 0005](adr/0005-client-side-gemini-rate-limit.md).
-- **Retries.** Only temporary errors are retried: 429 (rate limit) and 503 (overloaded), up to 3 attempts. The wait is Google's `retryDelay` + 1 second when given, otherwise 2s then 4s. If Google asks for more than 60 seconds (usually the daily quota), the call fails instead of waiting. Any other error (e.g. a wrong API key) fails immediately. See [ADR 0004](adr/0004-retry-only-temporary-errors.md).
+- **Retries.** Only temporary errors are retried: 429 (rate limit) and 503 (overloaded), up to 5 attempts. The wait is Google's `retryDelay` + 1 second when given, otherwise 5s, 10s, 20s, 40s (`BACKOFF_SECONDS`). If Google asks for more than 60 seconds (usually the daily quota), the call fails instead of waiting. Any other error (e.g. a wrong API key) fails immediately. See [ADR 0004](adr/0004-retry-only-temporary-errors.md).
 - **Emails per run.** At most 15 (`MAX_EMAILS_PER_RUN`; Make used 11), oldest of those first, so one run fits into Gemini's 15-per-minute limit. With more than 15 unread, the 15 newest are taken and the rest wait for the next run ([ADR 0011](adr/0011-email-parsing-rules.md)).
 - **Per email (`main.py`):**
   - Each email is processed on its own, so one failing email does not stop the others.

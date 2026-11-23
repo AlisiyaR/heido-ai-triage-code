@@ -28,9 +28,9 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **Pydantic `BaseModel`**: a class that describes data and checks it. `title: str` means "title must be text". Similar to a Java class with typed fields, plus automatic checking.
 - **`try / except`**: like `try / catch` in Java. `except errors.APIError as error:` catches only Gemini API errors.
 - **`raise`** with nothing after it (inside `except`): throws the same error again, so the caller sees it.
-- **`for attempt in range(1, MAX_ATTEMPTS + 1):`**: loops with attempt = 1, 2, 3. `range` stops *before* the second number.
+- **`for attempt in range(1, MAX_ATTEMPTS + 1):`**: loops with attempt = 1, 2, 3, 4, 5. `range` stops *before* the second number.
 - **`time.sleep(seconds)`**: pauses the program.
-- **`2**attempt`**: "2 to the power of attempt" (2, 4).
+- **`BACKOFF_SECONDS[attempt - 1]`**: picks one wait from a list. Lists count from 0, so attempt 1 gets `BACKOFF_SECONDS[0]` (5 seconds), attempt 2 gets 10 seconds, and so on. A plain list is easier to read and change than a formula.
 - **`logging`**: like `print`, but every line has a level (INFO, WARNING, ERROR) and can go to the console and a file. `logger = logging.getLogger(__name__)` creates a logger named after the file.
 - **`%r` / `%s` / `%d` in log messages**: placeholders. `%r` shows the value with quotes, so empty or odd values are easy to spot.
 - **`os.path.dirname(__file__)`**: the folder of the current file, so `prompt.txt` is found no matter where you run the program from.

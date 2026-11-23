@@ -88,7 +88,7 @@ Python 3.13 in `.venv`. Each module has a self-test under `if __name__ == "__mai
 ### Classification and routing
 - The 9 categories are in `config.CATEGORIES` and must match `prompt.txt`. An unknown category becomes `Other / Unclassified`, and an unknown priority becomes `Medium`.
 - The assignee comes from a fixed rule, `config.ROUTING`, not from the AI. The default is Emily Carter.
-- Gemini calls are limited to `config.GEMINI_REQUESTS_PER_MINUTE` (15, free tier): `classifier.py` spaces calls 4s apart and, on 429/503, waits Google's `retryDelay` (max 60s).
+- Gemini calls are limited to `config.GEMINI_REQUESTS_PER_MINUTE` (15, free tier): `classifier.py` spaces calls 4s apart and, on 429/503, retries up to 5 attempts, waiting Google's `retryDelay` (max 60s) or 5/10/20/40s.
 - monday.com column IDs are in `config.COLUMNS`.
 
 ### Email fetching and running

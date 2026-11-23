@@ -19,7 +19,8 @@ with open(PROMPT_FILE, encoding="utf-8") as prompt_file:
 
 client = genai.Client(api_key=config.GEMINI_API_KEY)
 
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 5
+BACKOFF_SECONDS = [5, 10, 20, 40]  # waits between the 5 attempts when Google gives no retryDelay
 RETRY_CODES = (429, 503)  # rate limit, overloaded: temporary, worth retrying
 MAX_RETRY_WAIT = 60  # seconds; a longer retryDelay usually means the daily quota is used up
 
@@ -84,7 +85,7 @@ def call_gemini(prompt):
                 raise
             retry_delay = get_retry_delay(error)
             if retry_delay is None:
-                wait_seconds, source = 2**attempt, "backoff"  # 2s, then 4s
+                wait_seconds, source = BACKOFF_SECONDS[attempt - 1], "backoff"
             else:
                 wait_seconds, source = retry_delay + 1, "Google retryDelay"
             if wait_seconds > MAX_RETRY_WAIT:
