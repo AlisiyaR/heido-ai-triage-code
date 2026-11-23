@@ -142,7 +142,7 @@ Each module has a self-test:
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md): components, data flow diagrams, error handling, limits
-- [Architecture Decision Records](docs/adr/): why each design choice was made (14 decisions)
+- [Architecture Decision Records](docs/adr/): why each design choice was made (15 decisions)
 - [Final check](docs/final-check.md): the project checked against its definition of done
 - [Python concepts](docs/python-concepts.md): the Python ideas used in the code, explained
 - [Build brief](docs/build-brief.md): the original requirements

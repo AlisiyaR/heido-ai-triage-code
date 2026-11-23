@@ -70,15 +70,18 @@ Python ideas used in this project, explained for a beginner with a Java backgrou
 - **Type hints** (`subject: str`, `attachments: list[Attachment]`): say what type a field should hold. Python does not enforce them at runtime; they help readers and editors.
 - **`field(default_factory=list)`**: gives each new object its own empty list. Writing `= []` directly would make every object share the same list.
 - **`bytes`**: raw binary data (e.g. a PDF file), not text. `.decode("utf-8")` turns bytes into text.
-- **`base64.urlsafe_b64decode`**: Gmail sends file and text content encoded as base64url (only letters, digits, `-` and `_`). This turns it back into bytes. The `"=" * (-len(data) % 4)` adds the padding that base64 needs.
-- **Recursion**: a function that calls itself. An email is a tree of parts (a part can contain parts), so `find_text_part` and `collect_attachments` call themselves on each sub-part.
+- **`base64.urlsafe_b64decode`**: Gmail sends the raw email encoded as base64url (only letters, digits, `-` and `_`). This turns it back into bytes. The `"=" * (-len(data) % 4)` adds the padding that base64 needs.
+- **`email.message_from_bytes(raw, policy=policy.default)`**: Python's built-in email parser. It turns the raw email bytes into an `EmailMessage` object. `policy.default` gives the modern behavior: headers like the subject come back already decoded (Hebrew included).
+- **`msg.get_body(preferencelist=("plain", "html"))`**: finds the email's main text, preferring plain text, and skips attached files. Returns `None` if there is no text.
+- **`part.get_content()`**: returns the text of a part, decoded from base64 and from its charset (e.g. `windows-1255`). One call replaces hand-written decoding.
+- **`msg.walk()`**: goes through every part of the email at every level (an email is a tree: a part can contain parts). Before, we wrote this tree walk ourselves with recursion; the standard library already does it.
+- **`part.get_filename()`, `part.get_content_type()`, `part.get_payload(decode=True)`**: the file name (or `None`), the type (e.g. `image/png`), and the file's bytes.
+- **Shadowing a module name**: after `import email`, a variable named `email` would replace the module. That is why the self-test loop uses `message` as the variable name.
 - **`datetime.fromtimestamp(seconds, tz=timezone.utc)`**: turns "seconds since 1970" into a date and time, in UTC. Gmail gives milliseconds, so we divide by 1000.
 - **`email.utils.parseaddr`**: splits `"Dana Cohen <dana@x.com>"` into `("Dana Cohen", "dana@x.com")`.
 - **Tuple unpacking** (`from_name, from_email = parseaddr(...)`): puts each value of a pair into its own variable in one line.
-- **`dict.get(key, default)` on nested data**: `part.get("body", {}).get("data")` reads a value two levels deep without crashing if a level is missing.
-- **`next((... for ... if ...), "")`**: returns the first item that matches, or `""` if none does.
 - **`re.sub(pattern, replacement, text)`**: replaces every match of a regular expression. `(?i)` means ignore upper/lower case; `(?s)` lets `.` match line breaks too.
-- **`f"{email.received_at:%Y-%m-%d %H:%M}"`**: formats a date inside an f-string.
+- **`f"{message.received_at:%Y-%m-%d %H:%M}"`**: formats a date inside an f-string.
 - **Import inside `if __name__ == "__main__":`**: `gmail_client` is only needed by the self-test, so it is imported there and not when another file imports `email_reader`.
 
 

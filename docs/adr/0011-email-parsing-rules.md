@@ -1,7 +1,7 @@
 # 0011. Email parsing rules: which body, which files, which order
 
 - **Status:** Accepted
-- **Date:** 2026-11-22
+- **Date:** 2026-11-22 (implementation changed by [0015](0015-raw-format-and-python-email-package.md); the rules below are unchanged)
 
 ## Context
 Real emails come in many shapes: plain text only, HTML only, both (multipart/alternative), with attached files, with images pasted into the body, and in different character sets (Hebrew emails are often `windows-1255`).

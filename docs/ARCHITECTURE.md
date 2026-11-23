@@ -116,11 +116,13 @@ flowchart TD
   - `Email`: `message_id`, `subject`, `body`, `from_name`, `from_email`, `received_at` (UTC), `attachments`
   - `Attachment`: `filename`, `mime_type`, `data` (the file's bytes)
 - `fetch_unread(service)` asks Gmail for up to 20 messages with both the `INBOX` and `UNREAD` labels. Gmail returns the newest first, so the list is reversed and the oldest are handled first. Reading an email does **not** mark it as read.
-- `parse_message()` builds an `Email` from Gmail's raw data:
+- Each email is fetched in Gmail's **raw** format: the whole email, files included, in one download. Python's built-in `email` package parses it, so the code does not decode MIME parts, charsets or base64 by hand ([ADR 0015](adr/0015-raw-format-and-python-email-package.md)).
+- `parse_message()` builds an `Email` from it:
   - **Sender:** `"Dana Cohen <dana@x.com>"` is split into name and address.
   - **Time:** Gmail's `internalDate` (milliseconds since 1970) becomes a UTC date and time.
-  - **Body:** the first plain-text part; if the email is HTML only, the HTML with tags removed. The text is decoded with the charset the email declares (e.g. Hebrew `windows-1255`).
-  - **Attachments:** every file in the email, **including images pasted into the body** (like Make's "has attachment or media"). An image without a name gets one, e.g. `inline_1.png`. Small files come inside the message; larger ones are downloaded separately.
+  - **Subject and sender name:** decoded automatically, including Hebrew.
+  - **Body:** `get_body()` picks the plain-text part, or the HTML part (tags removed) if the email is HTML only. `get_content()` decodes it with the charset the email declares (e.g. Hebrew `windows-1255`).
+  - **Attachments:** every file in the email, **including images pasted into the body** (like Make's "has attachment or media"). An image without a name gets one, e.g. `inline_1.png`. `walk()` goes through every part of the email to find them.
 - `mark_as_read(service, message_id)` removes the `UNREAD` label. `main.py` calls it once the monday item exists ([ADR 0009](adr/0009-mark-as-read-after-item-created.md)).
 - The rules for picking the body, the attachments and the order are in [ADR 0011](adr/0011-email-parsing-rules.md).
 
