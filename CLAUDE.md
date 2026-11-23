@@ -23,31 +23,38 @@ This repository is the code-based version of Heido. The original no-code version
 
 ## Working rules
 
+### Workflow
+Explain everything in simple words. For each task:
+1. Explain the plan and wait for my approval before writing code.
+2. Write the code. Change only what the task needs and keep changes small.
+3. Self-review the new or changed code (see below), then mention briefly what you simplified.
+4. Tell me how to run and check that it works.
+5. After each feature, update docs/ARCHITECTURE.md (simple English, for a beginner), add a numbered ADR in docs/adr/ (copy 0000-template.md) for each new decision, and add new Python concepts to docs/python-concepts.md.
+6. Don't commit or push without my approval. Use short, clear commit messages.
+
 ### Code style
-- Write simple, clear, readable code. Prefer the shortest solution that fully works.
-- No over-engineering: no extra classes, layers or features I didn't ask for.
-- Use clear names for variables and functions.
+- Simple, readable code with clear names. Prefer the shortest solution that fully works.
 - Every function gets a short English docstring (what it does, inputs, outputs).
 - Add comments only where the code isn't obvious, explaining why.
 
-### Changes
-- Before writing code, explain the plan in simple words and wait for my approval.
-- Never change, delete or refactor existing code without asking first and explaining why.
-- Change only what the task needs. Keep changes small.
-- Don't add new packages without asking and explaining why they're needed.
+### Self-review
+Before presenting new or changed code, check it and fix:
+- repeated code;
+- functions that do more than one thing, or are longer than ~40 lines (if one must stay longer, explain why);
+- anything I didn't ask for (extra classes, layers or features);
+- custom code where the standard library or an already-installed package does the job;
+- deep nesting where a simpler structure works (e.g. an early return or a small helper).
+
+These fixes apply only to the code of the current task.
+
+### Ask first
+- Before changing, deleting or refactoring other existing code, explain why and wait for my approval.
+- Before adding a new package, explain why it's needed.
+- If something is unclear, ask me instead of guessing.
 
 ### Security
 - Never read, print or log secrets (.env, credentials.json, token.json).
 - Never hardcode API keys, passwords or tokens. Load them from .env.
-
-### Testing and Git
-- After a change, tell me how to run and check that it works.
-- Don't commit or push without my approval. Use short, clear commit messages.
-
-### Learning
-- Explain what you're doing in simple words.
-- After each feature, update docs/ARCHITECTURE.md (simple English, for a beginner) and add a numbered ADR in docs/adr/ (copy 0000-template.md) for each new decision. Add new Python concepts to docs/python-concepts.md.
-- If something is unclear, ask me instead of guessing.
 
 ## Status
 
